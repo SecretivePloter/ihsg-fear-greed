@@ -2,40 +2,35 @@ name: Update IHSG Fear & Greed Data
 
 on:
   schedule:
-    # Setiap hari Senin-Jumat jam 09.00 UTC = 16.00 WIB
-    # (30 menit setelah market BEI tutup jam 15.30 WIB)
     - cron: '0 9 * * 1-5'
-
-  # Bisa juga dijalanin manual dari tab Actions di GitHub
   workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: write
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 2. Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # 3. Install dependencies
       - name: Install dependencies
         run: |
           pip install yfinance pandas numpy pytrends
 
-      # 4. Jalanin script update
       - name: Run update script
         run: python update_data.py
 
-      # 5. Commit dan push CSV yang udah diupdate
       - name: Commit and push updated data
         run: |
           git config --global user.name  "github-actions[bot]"
