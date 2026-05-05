@@ -19,9 +19,13 @@ def load_logo(path="logo.png"):
         return f"data:image/{ext};base64,{data}"
     return None
 
+# Load logo untuk favicon
+_logo_path = Path("logo.png")
+_favicon = _logo_path if _logo_path.exists() else "📊"
+
 st.set_page_config(
     page_title="IHSG Fear & Greed Index",
-    page_icon="📊",
+    page_icon=_favicon,        # ← pakai logo.png kalau ada
     layout="wide"
 )
 
@@ -243,7 +247,7 @@ with st.spinner("Mengambil data terbaru..."):
 
 # ── HEADER ───────────────────────────────────────────────────
 logo_src  = load_logo("logo.png")
-logo_html = f'<img src="{logo_src}" style="width:64px;height:64px;object-fit:contain;border-radius:10px;display:block;margin-left:auto;">' if logo_src else '<div style="width:64px;height:64px;border:1px dashed #30363d;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#8b949e;font-size:0.65rem;margin-left:auto;">LOGO</div>'
+logo_html = f'<img src="{logo_src}" style="width:110px;height:110px;object-fit:contain;border-radius:12px;display:block;margin-left:auto;">' if logo_src else '<div style="width:110px;height:110px;border:1px dashed #30363d;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#8b949e;font-size:0.65rem;margin-left:auto;">LOGO</div>'
 
 st.markdown(f"""
 <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0 0.5rem;flex-wrap:wrap;gap:8px;">
