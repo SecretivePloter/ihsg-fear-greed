@@ -224,10 +224,10 @@ def hitung_semua(ihsg, idr):
     if os.path.exists(csv_path):
         df_hist = pd.read_csv(csv_path, index_col="date", parse_dates=True)
         # Ambil skor trends terakhir dari CSV
-        s_tr = float(df_hist["s_tr"].dropna().iloc[-1]) if "s_tr" in df_hist.columns and len(df_hist) > 0 else 50.0
-    else:
-        df_hist = pd.DataFrame(columns=["skor","close","s_mom","s_rsi","s_vol","s_idr","s_tr"])
-        s_tr = 50.0
+        if "s_tr" in df_hist.columns and len(df_hist["s_tr"].dropna()) > 0:
+            s_tr = float(df_hist["s_tr"].dropna().iloc[-1])
+        else:
+            s_tr = 50.0  # fallback netral kalau kolom belum ada
 
     skor_hari_ini = round(s_mom*0.25 + s_rsi*0.20 + s_vol*0.20 + s_idr*0.20 + s_tr*0.15, 1)
     return skor_hari_ini, s_mom, s_rsi, s_vol, s_idr, s_tr, df_hist, float(close.iloc[-1]), float(idr.iloc[-1])
