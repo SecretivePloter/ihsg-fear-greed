@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import plotly.graph_objects as go
-from pytrends.request import TrendReq
 from datetime import datetime, timedelta
 import os
 import base64
@@ -19,13 +18,9 @@ def load_logo(path="logo.png"):
         return f"data:image/{ext};base64,{data}"
     return None
 
-# Load logo untuk favicon
-_logo_path = Path("logo.png")
-_favicon = _logo_path if _logo_path.exists() else "📊"
-
 st.set_page_config(
     page_title="IHSG Fear & Greed Index",
-    page_icon=_favicon,        # ← pakai logo.png kalau ada
+    page_icon="📊",
     layout="wide"
 )
 
@@ -203,25 +198,13 @@ def filter_hari(df, hari):
 def load_data():
     ihsg = yf.download("^JKSE", period="5y", progress=False)
     idr  = yf.download("IDR=X", period="5y", progress=False)["Close"].squeeze()
-    pytrends = TrendReq(hl='id-ID', tz=420)
-    pytrends.build_payload(
-        ["IHSG","rupiah","saham","investasi","bursa"],
-        timeframe='today 5-y', geo='ID'
-    )
-    trends_data = pytrends.interest_over_time()
-    if 'isPartial' in trends_data.columns:
-        trends_data = trends_data.drop(columns=['isPartial'])
-    return ihsg, idr, trends_data
+    return ihsg, idr
 
 @st.cache_data(ttl=900)
-def hitung_semua(ihsg, idr, trends_data):
+def hitung_semua(ihsg, idr):
     close    = ihsg["Close"].squeeze()
     volume   = ihsg["Volume"].squeeze()
     idr_ch   = idr.pct_change(10)
-    bobot_kw = {"IHSG":0.30,"rupiah":0.30,"saham":0.20,"investasi":0.15,"bursa":0.05}
-    tr_skor  = sum(trends_data[kw]*b for kw,b in bobot_kw.items())
-    tr_daily = tr_skor.resample("D").ffill()
-    tr_align = tr_daily.reindex(close.index, method="ffill")
     ma50     = close.rolling(50).mean()
     momentum = (close - ma50) / ma50 * 100
     rsi      = hitung_rsi(close)
@@ -231,23 +214,28 @@ def hitung_semua(ihsg, idr, trends_data):
     s_rsi = normalisasi(rsi)
     s_vol = normalisasi(vol_r)
     s_idr = normalisasi(idr_inv)
-    s_tr  = normalisasi(tr_align)
-    skor_hari_ini = round(s_mom*0.25 + s_rsi*0.20 + s_vol*0.20 + s_idr*0.20 + s_tr*0.15, 1)
+
+    # Baca CSV untuk skor trends & historis
     csv_path = "data/historis.csv"
     if os.path.exists(csv_path):
         df_hist = pd.read_csv(csv_path, index_col="date", parse_dates=True)
+        # Ambil skor trends terakhir dari CSV
+        s_tr = float(df_hist["s_tr"].dropna().iloc[-1]) if "s_tr" in df_hist.columns and len(df_hist) > 0 else 50.0
     else:
-        df_hist = pd.DataFrame(columns=["skor","close"])
+        df_hist = pd.DataFrame(columns=["skor","close","s_mom","s_rsi","s_vol","s_idr","s_tr"])
+        s_tr = 50.0
+
+    skor_hari_ini = round(s_mom*0.25 + s_rsi*0.20 + s_vol*0.20 + s_idr*0.20 + s_tr*0.15, 1)
     return skor_hari_ini, s_mom, s_rsi, s_vol, s_idr, s_tr, df_hist, float(close.iloc[-1]), float(idr.iloc[-1])
 
 # ── LOAD ─────────────────────────────────────────────────────
 with st.spinner("Mengambil data terbaru..."):
-    ihsg, idr, trends_data = load_data()
-    skor, s_mom, s_rsi, s_vol, s_idr, s_tr, df_hist, harga_ihsg, kurs_idr = hitung_semua(ihsg, idr, trends_data)
+    ihsg, idr = load_data()
+    skor, s_mom, s_rsi, s_vol, s_idr, s_tr, df_hist, harga_ihsg, kurs_idr = hitung_semua(ihsg, idr)
 
 # ── HEADER ───────────────────────────────────────────────────
 logo_src  = load_logo("logo.png")
-logo_html = f'<img src="{logo_src}" style="width:110px;height:110px;object-fit:contain;border-radius:12px;display:block;margin-left:auto;">' if logo_src else '<div style="width:110px;height:110px;border:1px dashed #30363d;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#8b949e;font-size:0.65rem;margin-left:auto;">LOGO</div>'
+logo_html = f'<img src="{logo_src}" style="width:64px;height:64px;object-fit:contain;border-radius:10px;display:block;margin-left:auto;">' if logo_src else '<div style="width:64px;height:64px;border:1px dashed #30363d;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#8b949e;font-size:0.65rem;margin-left:auto;">LOGO</div>'
 
 st.markdown(f"""
 <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0 0.5rem;flex-wrap:wrap;gap:8px;">
