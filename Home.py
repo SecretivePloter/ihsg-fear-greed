@@ -183,10 +183,15 @@ def hitung_rsi(data, period=14):
     return 100 - (100 / (1 + rs))
 
 def normalisasi(series, window=90):
-    recent  = series.dropna().tail(window)
+    clean = series.dropna()
+    if len(clean) == 0:
+        return 50.0
+    recent = clean.tail(window)
+    if len(recent) == 0:
+        return 50.0
     min_val = float(recent.min())
     max_val = float(recent.max())
-    nilai   = float(series.dropna().iloc[-1])
+    nilai   = float(clean.iloc[-1])
     if max_val == min_val:
         return 50.0
     return round((nilai - min_val) / (max_val - min_val) * 100, 1)
@@ -200,9 +205,15 @@ def filter_hari(df, hari):
 # ── LOAD DATA ────────────────────────────────────────────────
 @st.cache_data(ttl=900)
 def load_data():
-    ihsg = yf.download("^JKSE", period="5y", progress=False)
-    idr  = yf.download("IDR=X", period="5y", progress=False)["Close"].squeeze()
-    return ihsg, idr
+    for attempt in range(3):
+        try:
+            ihsg = yf.download("^JKSE", period="5y", progress=False)
+            idr  = yf.download("IDR=X", period="5y", progress=False)["Close"].squeeze()
+            if len(ihsg) > 0 and len(idr) > 0:
+                return ihsg, idr
+        except Exception:
+            pass
+    return pd.DataFrame(), pd.Series(dtype=float)
 
 @st.cache_data(ttl=900)
 def hitung_semua(ihsg, idr):
@@ -235,11 +246,14 @@ def hitung_semua(ihsg, idr):
 # ── LOAD ─────────────────────────────────────────────────────
 with st.spinner("Mengambil data terbaru..."):
     ihsg, idr = load_data()
+    if len(ihsg) == 0:
+        st.error("⚠️ Gagal mengambil data pasar. Coba refresh halaman dalam beberapa menit.")
+        st.stop()
     skor, s_mom, s_rsi, s_vol, s_idr, s_tr, df_hist, harga_ihsg, kurs_idr = hitung_semua(ihsg, idr)
 
 # ── HEADER ───────────────────────────────────────────────────
 logo_src  = load_logo("logo.png")
-logo_html = f'<img src="{logo_src}" style="width:110px;height:110px;object-fit:contain;border-radius:12px;display:block;margin-left:auto;">' if logo_src else '<div style="width:110px;height:110px;border:1px dashed #30363d;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#8b949e;font-size:0.65rem;margin-left:auto;">LOGO</div>'
+logo_html = f'<img src="{logo_src}" style="width:160px;height:160px;object-fit:contain;border-radius:12px;display:block;margin-left:auto;">' if logo_src else '<div style="width:160px;height:160px;border:1px dashed #30363d;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#8b949e;font-size:0.65rem;margin-left:auto;">LOGO</div>'
 
 st.markdown(f"""
 <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0 0.5rem;flex-wrap:wrap;gap:8px;">
