@@ -53,9 +53,19 @@ def get_font(size, bold=False):
 
 # ── GENERATE ──────────────────────────────────────────────────
 def generate_pnl(emiten, harga_beli, harga_jual):
-    TEMPLATE = "pnl_template.png"
-    if not os.path.exists(TEMPLATE):
-        st.error("❌ pnl_template.png tidak ditemukan!")
+    # Cari template relatif ke lokasi script, bukan working directory
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    # Coba beberapa lokasi
+    for candidate in [
+        os.path.join(BASE_DIR, "..", "pnl_template.png"),  # root project
+        os.path.join(BASE_DIR, "pnl_template.png"),        # folder pages
+        "pnl_template.png",                                 # working dir
+    ]:
+        if os.path.exists(candidate):
+            TEMPLATE = candidate
+            break
+    else:
+        st.error("❌ pnl_template.png tidak ditemukan! Pastikan file ada di folder root project.")
         return None
 
     img  = Image.open(TEMPLATE).convert("RGB")
@@ -86,12 +96,12 @@ def generate_pnl(emiten, harga_beli, harga_jual):
     draw.text((279, 1014), angka_str,  font=f_angka,  fill=warna)
     draw.text((279 + w_angka + 10, 1014 + 120), persen_str, font=f_persen, fill=warna)
 
-    # Harga beli
+    # Harga beli (kiri) — x=271
     f_val = get_font(240, bold=True)
-    draw.text((1830, 2095), f"Rp{int(harga_beli):,}", font=f_val, fill=WHITE)
+    draw.text((271, 2095), f"Rp{int(harga_beli):,}", font=f_val, fill=WHITE)
 
-    # Harga jual
-    draw.text((271, 2112), f"Rp{int(harga_jual):,}", font=f_val, fill=WHITE)
+    # Harga jual (kanan) — x=1830
+    draw.text((1830, 2112), f"Rp{int(harga_jual):,}", font=f_val, fill=WHITE)
 
     # Watermark
     f_wm = get_font(40)
