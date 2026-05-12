@@ -4,6 +4,9 @@ const state = {
   currentPeriod: 365,
   pnlTemplate: null,
   usdIdr: null,
+  averageBuys: [
+    { price: 9000, lot: 1 },
+  ],
 };
 
 const scoreBands = [
@@ -345,17 +348,72 @@ function resultRow(label, value, tone = '') {
   `;
 }
 
+function showCalculatorPanel(target) {
+  document.querySelectorAll('[data-calculator-target]').forEach((button) => {
+    const active = button.dataset.calculatorTarget === target;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  document.querySelectorAll('[data-calculator-panel]').forEach((panel) => {
+    panel.hidden = panel.dataset.calculatorPanel !== target;
+  });
+}
+
+function renderAverageBuyRows() {
+  const rows = document.getElementById('avgBuyRows');
+  rows.innerHTML = state.averageBuys.map((buy, index) => `
+    <div class="avg-buy-row">
+      <div class="avg-buy-heading">
+        <strong>Buy ${index + 1}</strong>
+        ${index === 0 ? '<span>Wajib</span>' : `<button class="remove-buy-button" type="button" data-remove-buy="${index}">Hapus</button>`}
+      </div>
+      <div class="avg-buy-fields">
+        <label>Harga Buy (Rp)
+          <input class="avg-buy-price" type="number" min="0" step="1" value="${buy.price}" data-buy-index="${index}">
+        </label>
+        <label>Lot
+          <input class="avg-buy-lot" type="number" min="0" step="1" value="${buy.lot}" data-buy-index="${index}">
+        </label>
+      </div>
+    </div>
+  `).join('');
+
+  rows.querySelectorAll('.avg-buy-price').forEach((input) => {
+    input.addEventListener('input', (event) => {
+      const index = Number(event.target.dataset.buyIndex);
+      state.averageBuys[index].price = Number(event.target.value);
+      renderAverageCalculator();
+    });
+  });
+  rows.querySelectorAll('.avg-buy-lot').forEach((input) => {
+    input.addEventListener('input', (event) => {
+      const index = Number(event.target.dataset.buyIndex);
+      state.averageBuys[index].lot = Number(event.target.value);
+      renderAverageCalculator();
+    });
+  });
+  rows.querySelectorAll('[data-remove-buy]').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      const index = Number(event.target.dataset.removeBuy);
+      state.averageBuys.splice(index, 1);
+      renderAverageBuyRows();
+      renderAverageCalculator();
+    });
+  });
+}
+
+function addAverageBuy() {
+  state.averageBuys.push({ price: 0, lot: 0 });
+  renderAverageBuyRows();
+  renderAverageCalculator();
+}
+
 function renderAverageCalculator() {
-  const buy1 = numberFromInput('avgBuy1Price');
-  const lot1 = numberFromInput('avgBuy1Lot');
-  const buy2 = numberFromInput('avgBuy2Price');
-  const lot2 = numberFromInput('avgBuy2Lot');
   const current = numberFromInput('avgCurrentPrice');
   const fee = numberFromInput('avgBuyFee') / 100;
-  const shares1 = lot1 * 100;
-  const shares2 = lot2 * 100;
-  const totalShares = shares1 + shares2;
-  const grossCost = buy1 * shares1 + buy2 * shares2;
+  const totalLot = state.averageBuys.reduce((sum, buy) => sum + buy.lot, 0);
+  const totalShares = totalLot * 100;
+  const grossCost = state.averageBuys.reduce((sum, buy) => sum + (buy.price * buy.lot * 100), 0);
   const totalCost = grossCost * (1 + fee);
   const average = totalShares > 0 ? totalCost / totalShares : 0;
   const marketValue = current * totalShares;
@@ -364,7 +422,7 @@ function renderAverageCalculator() {
   const color = pnl >= 0 ? '#06ab6d' : '#ef4444';
 
   document.getElementById('averageResult').innerHTML = [
-    resultRow('Total Lot', formatNumber(lot1 + lot2, 0)),
+    resultRow('Total Lot', formatNumber(totalLot, 0)),
     resultRow('Total Modal + Fee', rupiah(totalCost)),
     resultRow('Average Price', rupiah(average)),
     resultRow('Nilai Sekarang', rupiah(marketValue)),
@@ -404,11 +462,13 @@ function renderRightIssueCalculator() {
   const totalShares = currentShares + rightsShares;
   const exerciseCost = rightsShares * exercisePrice;
   const terp = totalShares > 0 ? ((currentShares * marketPrice) + exerciseCost) / totalShares : 0;
+  const rightsLot = rightsShares / 100;
+  const totalLot = totalShares / 100;
 
   document.getElementById('rightResult').innerHTML = [
-    resultRow('Hak Saham Baru', `${formatNumber(rightsShares, 0)} saham`),
+    resultRow('Hak Saham Baru', `${formatNumber(rightsLot, 2)} lot / ${formatNumber(rightsShares, 0)} lembar`),
     resultRow('Dana Tebus', rupiah(exerciseCost)),
-    resultRow('Total Saham Setelah Tebus', formatNumber(totalShares, 0)),
+    resultRow('Total Setelah Tebus', `${formatNumber(totalLot, 2)} lot / ${formatNumber(totalShares, 0)} lembar`),
     resultRow('TERP Teoritis', rupiah(terp)),
     resultRow('Diskon/Premium vs Pasar', formatSignedPercent(marketPrice > 0 ? ((terp - marketPrice) / marketPrice) * 100 : 0)),
   ].join('');
@@ -556,14 +616,11 @@ document.getElementById('generatePnl').addEventListener('click', renderPnl);
 ['emitenInput', 'buyInput', 'sellInput'].forEach((id) => {
   document.getElementById(id).addEventListener('input', renderPnl);
 });
-[
-  'avgBuy1Price',
-  'avgBuy1Lot',
-  'avgBuy2Price',
-  'avgBuy2Lot',
-  'avgCurrentPrice',
-  'avgBuyFee',
-].forEach((id) => {
+document.getElementById('addAvgBuy').addEventListener('click', addAverageBuy);
+document.querySelectorAll('[data-calculator-target]').forEach((button) => {
+  button.addEventListener('click', () => showCalculatorPanel(button.dataset.calculatorTarget));
+});
+['avgCurrentPrice', 'avgBuyFee'].forEach((id) => {
   document.getElementById(id).addEventListener('input', renderAverageCalculator);
 });
 ['divLot', 'divAvgPrice', 'divPerShare', 'divTax'].forEach((id) => {
@@ -587,4 +644,5 @@ initHome();
 showRoute();
 initPnlTemplate();
 renderPnl();
+renderAverageBuyRows();
 renderCalculators();
