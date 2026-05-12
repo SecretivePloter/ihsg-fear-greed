@@ -13,6 +13,7 @@ Render Free Web Service akan sleep setelah idle. Versi ini tidak menjalankan ser
 - `data/historis.csv` — data historis yang dibaca langsung oleh browser.
 - `update_data.py` — script update data harian dari GitHub Actions.
 - `.github/workflows/update.yml` — update `data/historis.csv` setiap hari bursa.
+- `package.json` — build script untuk platform seperti Vercel/Render.
 
 ## Jalankan lokal
 
@@ -22,6 +23,13 @@ python3 -m http.server 8000
 
 Buka `http://localhost:8000`.
 
+Untuk mengecek output build:
+
+```bash
+npm run build
+python3 -m http.server 8000 --directory public
+```
+
 ## Deploy gratis tanpa sleep
 
 ### Render Static Site
@@ -29,8 +37,8 @@ Buka `http://localhost:8000`.
 Jika memakai `render.yaml`, deploy sebagai Static Site:
 
 - Runtime: `static`
-- Build Command: `echo "Static site, no build required"`
-- Static Publish Path: `.`
+- Build Command: `npm run build`
+- Static Publish Path: `./public`
 
 ### GitHub Pages
 

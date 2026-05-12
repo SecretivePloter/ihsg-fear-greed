@@ -2,5 +2,5 @@ services:
   - type: web
     name: ihsg-fear-greed
     runtime: static
-    buildCommand: echo "Static site, no build required"
-    staticPublishPath: .
+    buildCommand: npm run build
+    staticPublishPath: ./public
