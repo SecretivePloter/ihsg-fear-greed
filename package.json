@@ -1,0 +1,1 @@
+{"scripts":{"build":"mkdir -p public && cp -R index.html assets data logo.png pnl_template.png .nojekyll public/"},"dependencies":{},"devDependencies":{}}

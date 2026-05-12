@@ -1,9 +1,6 @@
 services:
   - type: web
     name: ihsg-fear-greed
-    runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run Home.py --server.port $PORT --server.address 0.0.0.0 --server.headless true
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
+    runtime: static
+    buildCommand: npm run build
+    staticPublishPath: ./public

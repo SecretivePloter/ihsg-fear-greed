@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="description" content="IHSG Fear & Greed Index Indonesia: pantau sentimen pasar saham, chart historis, USD/IDR, P&L Generator, dan kalkulator saham langsung dari browser.">
+  <meta name="keywords" content="IHSG, fear and greed index, saham Indonesia, kalkulator saham, average price saham, dividen saham, right issue, USD IDR">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://ihsgfeargreedindex.my.id/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ihsgfeargreedindex.my.id/">
+  <meta property="og:title" content="IHSG Fear & Greed Index Indonesia">
+  <meta property="og:description" content="Pantau sentimen IHSG, chart historis, USD/IDR, P&L Generator, dan kalkulator saham Indonesia.">
+  <meta property="og:image" content="https://ihsgfeargreedindex.my.id/logo.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="IHSG Fear & Greed Index Indonesia">
+  <meta name="twitter:description" content="Dashboard sentimen pasar saham Indonesia dengan P&L Generator dan kalkulator saham.">
+  <meta name="twitter:image" content="https://ihsgfeargreedindex.my.id/logo.png">
+  <title>IHSG Fear & Greed Index Indonesia | Kalkulator Saham</title>
+  <link rel="icon" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "IHSG Fear & Greed Index Indonesia",
+      "url": "https://ihsgfeargreedindex.my.id/",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "description": "Dashboard sentimen IHSG, USD/IDR, P&L Generator, dan kalkulator saham Indonesia."
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #f6c90e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    a { color: inherit; }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2rem 3rem 1rem;
+    }
+
+    .top-nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .nav-link,
+    button,
+    select,
+    input {
+      font: inherit;
+    }
+
+    .nav-link,
+    button {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 160ms ease, transform 160ms ease;
+    }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    button:hover,
+    .nav-link:hover {
+      border-color: #57606a;
+      transform: translateY(-1px);
+    }
+
+    .header {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+    }
+
+    .title {
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(1.2rem, 3vw, 1.55rem);
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: clamp(0.78rem, 2vw, 0.9rem);
+      margin-top: 4px;
+    }
+
+    .logo {
+      border-radius: 12px;
+      height: 160px;
+      object-fit: contain;
+      width: 160px;
+    }
+
+    .divider {
+      border-top: 1px solid var(--border);
+      margin: 1rem 0 1.5rem;
+    }
+
+    .layout {
+      display: grid;
+      gap: 2rem;
+      grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr);
+    }
+
+    .section-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 1rem 0 0.6rem;
+    }
+
+    .metric-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 0.6rem;
+      padding: 1rem 1.2rem;
+    }
+
+    .row-between {
+      align-items: center;
+      display: flex;
+      gap: 0.7rem;
+      justify-content: space-between;
+    }
+
+    .badge {
+      border-radius: 20px;
+      display: inline-block;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 3px 12px;
+      white-space: nowrap;
+    }
+
+    .gauge-card {
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .gauge-wrap {
+      height: 240px;
+      position: relative;
+      width: min(100%, 340px);
+    }
+
+    .gauge-wrap svg {
+      display: block;
+      height: 100%;
+      overflow: visible;
+      width: 100%;
+    }
+
+    .gauge-value {
+      font-family: 'Space Mono', monospace;
+      font-size: 3rem;
+      font-weight: 700;
+      left: 0;
+      position: absolute;
+      right: 0;
+      text-align: center;
+      top: 49%;
+      transform: translateY(-50%);
+    }
+
+    .desc-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 10px;
+      margin-top: 1rem;
+      padding: 1.2rem 1.5rem;
+    }
+
+    .desc-box h2 {
+      color: var(--accent);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      margin: 0 0 0.5rem;
+      text-transform: uppercase;
+    }
+
+    .desc-box p {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .metric-grid {
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-bottom: 1.5rem;
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .metric-value {
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(1.1rem, 2vw, 1.6rem);
+      font-weight: 700;
+    }
+
+    .controls {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      justify-content: space-between;
+      margin-bottom: 0.8rem;
+    }
+
+    select,
+    input {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 0.65rem 0.75rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .tab-button {
+      padding: 0.65rem 0.9rem;
+    }
+
+    .tab-button.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .tab-panel[hidden] { display: none; }
+
+    #historyChart {
+      min-height: 420px;
+      width: 100%;
+    }
+
+    .progress {
+      background: #21262d;
+      border-radius: 4px;
+      height: 6px;
+      margin-bottom: 6px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      border-radius: 4px;
+      height: 6px;
+    }
+
+    .footer {
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.72rem;
+      margin-top: 2rem;
+      padding: 1.5rem 0 0.5rem;
+      text-align: center;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .pnl-shell {
+      margin: 0 auto;
+      max-width: 720px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 0.9rem;
+      margin: 1rem 0;
+    }
+
+    .form-grid label {
+      color: var(--muted);
+      display: grid;
+      gap: 0.35rem;
+      font-size: 0.86rem;
+      font-weight: 500;
+    }
+
+    .primary-button {
+      background: #238636;
+      border: 0;
+      font-weight: 700;
+      margin-top: 0.5rem;
+      padding: 0.75rem 1rem;
+      width: 100%;
+    }
+
+    #pnlCanvas {
+      background: #111820;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      display: block;
+      height: auto;
+      margin-top: 1rem;
+      max-width: 100%;
+      width: 100%;
+    }
+
+    .download-row {
+      align-items: center;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: space-between;
+      margin-top: 0.8rem;
+    }
+
+    .download-row a {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-weight: 600;
+      padding: 0.7rem 0.9rem;
+      text-decoration: none;
+    }
+
+    .calculator-shell {
+      margin: 0 auto;
+      max-width: 980px;
+    }
+
+    .calculator-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .calculator-card h2 {
+      color: var(--accent);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.95rem;
+      margin: 0 0 0.5rem;
+    }
+
+    .calculator-card p {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.5;
+      margin: 0 0 0.85rem;
+    }
+
+    .calc-form {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .calc-form label {
+      color: var(--muted);
+      display: grid;
+      gap: 0.35rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .result-grid {
+      display: grid;
+      gap: 0.55rem;
+      margin-top: 0.9rem;
+    }
+
+    .result-row {
+      align-items: center;
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: space-between;
+      padding: 0.65rem 0.75rem;
+    }
+
+    .result-row span:first-child {
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .result-row strong {
+      font-family: 'Space Mono', monospace;
+      text-align: right;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .error {
+      background: rgba(229, 62, 62, 0.1);
+      border: 1px solid rgba(229, 62, 62, 0.45);
+      border-radius: 12px;
+      color: #fca5a5;
+      padding: 1rem;
+    }
+
+    @media (max-width: 900px) {
+      .container { padding: 0.8rem; }
+      .top-nav { justify-content: stretch; }
+      .nav-link { justify-content: center; width: 100%; }
+      .layout,
+      .metric-grid,
+      .calculator-grid {
+        grid-template-columns: 1fr;
+      }
+      .logo {
+        height: 120px;
+        width: 120px;
+      }
+      .row-between {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .badge { font-size: 0.68rem; padding: 2px 7px; }
+      .section-title { font-size: 0.85rem; }
+      .metric-card { padding: 0.7rem 0.9rem; }
+      .desc-box { padding: 0.9rem 1rem; }
+      .desc-box p { font-size: 0.78rem; }
+      .tab-button { font-size: 0.78rem; padding: 6px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <nav class="top-nav">
+      <a class="nav-link" href="#/">Fear & Greed Index</a>
+      <a class="nav-link" href="#/pnl">P&L Generator</a>
+      <a class="nav-link" href="#/calculator">Kalkulator Saham</a>
+    </nav>
+
+    <div id="homePage" class="page active">
+      <header class="header">
+        <div>
+          <h1 class="title">IHSG Fear &amp; Greed Index</h1>
+          <div class="subtitle">Indeks sentimen pasar saham Indonesia · Update harian setelah market tutup 15.30 WIB</div>
+        </div>
+        <img class="logo" src="logo.png" alt="IHSG Fear & Greed logo">
+      </header>
+      <div class="divider"></div>
+
+      <div id="loading" class="muted">Memuat data historis...</div>
+      <div id="homeContent" class="layout" hidden>
+        <aside>
+          <div class="gauge-card">
+            <div class="gauge-wrap">
+              <svg viewBox="0 0 320 220" role="img">
+                <path d="M 35 170 A 125 125 0 0 1 285 170" fill="none" stroke="#2d1515" stroke-width="30" stroke-linecap="round" pathLength="100" stroke-dasharray="25 75" stroke-dashoffset="0"></path>
+                <path d="M 35 170 A 125 125 0 0 1 285 170" fill="none" stroke="#2d1e0f" stroke-width="30" stroke-linecap="butt" pathLength="100" stroke-dasharray="20 80" stroke-dashoffset="-25"></path>
+                <path d="M 35 170 A 125 125 0 0 1 285 170" fill="none" stroke="#2d2a0f" stroke-width="30" stroke-linecap="butt" pathLength="100" stroke-dasharray="10 90" stroke-dashoffset="-45"></path>
+                <path d="M 35 170 A 125 125 0 0 1 285 170" fill="none" stroke="#0f2d1a" stroke-width="30" stroke-linecap="butt" pathLength="100" stroke-dasharray="20 80" stroke-dashoffset="-55"></path>
+                <path d="M 35 170 A 125 125 0 0 1 285 170" fill="none" stroke="#0a2318" stroke-width="30" stroke-linecap="round" pathLength="100" stroke-dasharray="25 75" stroke-dashoffset="-75"></path>
+                <path id="gaugeArc" d="M 35 170 A 125 125 0 0 1 285 170" fill="none" stroke="#f6c90e" stroke-width="16" stroke-linecap="round" pathLength="100"></path>
+                <line id="gaugeNeedle" x1="160" y1="170" x2="160" y2="55" stroke="#f6c90e" stroke-width="4" stroke-linecap="round"></line>
+                <circle cx="160" cy="170" r="7" fill="#f6c90e"></circle>
+              </svg>
+              <div id="scoreValue" class="gauge-value">--</div>
+            </div>
+            <span id="scoreBadge" class="badge">Memuat</span>
+          </div>
+
+          <p class="section-title">Historical Values</p>
+          <div id="historicalCards"></div>
+
+          <p class="section-title">Yearly High &amp; Low</p>
+          <div id="yearlyCards"></div>
+
+          <div class="desc-box">
+            <h2>Tentang Indeks Ini</h2>
+            <p>
+              IHSG Fear &amp; Greed Index mengukur sentimen pasar saham Indonesia menggunakan
+              5 indikator: momentum harga (MA50), RSI, volume perdagangan, pergerakan kurs
+              rupiah, dan tren pencarian publik via Google Trends.<br><br>
+              <b style="color:#e53e3e;">0–24</b> Extreme Fear ·
+              <b style="color:#ed8936;">25–44</b> Fear ·
+              <b style="color:#ecc94b;">45–54</b> Neutral ·
+              <b style="color:#68d391;">55–74</b> Greed ·
+              <b style="color:#38a169;">75–100</b> Extreme Greed<br><br>
+              Bukan rekomendasi investasi.
+            </p>
+          </div>
+        </aside>
+
+        <div>
+          <div class="metric-grid">
+            <div class="metric-card">
+              <div class="metric-label">IHSG</div>
+              <div id="ihsgValue" class="metric-value">--</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">USD/IDR</div>
+              <div id="idrValue" class="metric-value">N/A</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Update</div>
+              <div id="updateValue" class="metric-value">--</div>
+            </div>
+          </div>
+
+          <div class="tabs" role="tablist">
+            <button id="historyTab" class="tab-button active" type="button">📈 Chart Historis</button>
+            <button id="breakdownTab" class="tab-button" type="button">🔍 Breakdown Indikator</button>
+          </div>
+
+          <div id="historyPanel" class="tab-panel">
+            <div class="controls">
+              <label class="muted">Periode
+                <select id="periodSelect">
+                  <option value="30">30 Hari</option>
+                  <option value="90">90 Hari</option>
+                  <option value="365" selected>1 Tahun</option>
+                  <option value="9999">Semua</option>
+                </select>
+              </label>
+            </div>
+            <div id="historyChart"></div>
+          </div>
+
+          <div id="breakdownPanel" class="tab-panel" hidden>
+            <div id="indicatorCards"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="pnlPage" class="page">
+      <div class="pnl-shell">
+        <header class="header">
+          <div>
+            <h1 class="title">📈 P&amp;L Generator</h1>
+            <div class="subtitle">Buat gambar profit/loss saham langsung di browser tanpa server.</div>
+          </div>
+        </header>
+        <div class="divider"></div>
+
+        <div class="metric-card">
+          <div class="form-grid">
+            <label>Emiten
+              <input id="emitenInput" maxlength="8" value="BBCA" autocomplete="off">
+            </label>
+            <label>Harga Beli
+              <input id="buyInput" type="number" min="1" step="1" value="9000">
+            </label>
+            <label>Harga Jual
+              <input id="sellInput" type="number" min="1" step="1" value="9500">
+            </label>
+            <button id="generatePnl" class="primary-button" type="button">Generate P&L</button>
+          </div>
+          <p id="pnlMessage" class="muted"></p>
+        </div>
+
+        <canvas id="pnlCanvas" width="1440" height="1800"></canvas>
+        <div class="download-row">
+          <span class="muted">Klik kanan gambar untuk copy, atau unduh PNG.</span>
+          <a id="downloadPnl" href="#" download="pnl.png">Download PNG</a>
+        </div>
+      </div>
+    </div>
+
+    <div id="calculatorPage" class="page">
+      <div class="calculator-shell">
+        <header class="header">
+          <div>
+            <h1 class="title">🧮 Kalkulator Saham</h1>
+            <div class="subtitle">Hitung average price, estimasi dividen, dan right issue langsung di browser.</div>
+          </div>
+        </header>
+        <div class="divider"></div>
+
+        <div class="calculator-grid">
+          <div class="metric-card calculator-card">
+            <h2>Average Price</h2>
+            <p>Gabungkan buy 1 dan buy 2 untuk melihat modal, average, dan estimasi profit/loss.</p>
+            <div class="calc-form">
+              <label>Buy 1 (Rp)
+                <input id="avgBuy1Price" type="number" min="0" step="1" value="9000">
+              </label>
+              <label>Lot Buy 1
+                <input id="avgBuy1Lot" type="number" min="0" step="1" value="1">
+              </label>
+              <label>Buy 2 (Rp)
+                <input id="avgBuy2Price" type="number" min="0" step="1" value="8500">
+              </label>
+              <label>Lot Buy 2
+                <input id="avgBuy2Lot" type="number" min="0" step="1" value="1">
+              </label>
+              <label>Harga Sekarang (Rp)
+                <input id="avgCurrentPrice" type="number" min="0" step="1" value="9200">
+              </label>
+              <label>Fee Beli (%)
+                <input id="avgBuyFee" type="number" min="0" step="0.01" value="0.15">
+              </label>
+            </div>
+            <div id="averageResult" class="result-grid"></div>
+          </div>
+
+          <div class="metric-card calculator-card">
+            <h2>Kalkulator Dividen</h2>
+            <p>Estimasi dividen kotor, pajak, dividen bersih, dan dividend yield.</p>
+            <div class="calc-form">
+              <label>Jumlah Lot
+                <input id="divLot" type="number" min="0" step="1" value="10">
+              </label>
+              <label>Average Price (Rp)
+                <input id="divAvgPrice" type="number" min="0" step="1" value="9000">
+              </label>
+              <label>Dividen / Saham (Rp)
+                <input id="divPerShare" type="number" min="0" step="1" value="300">
+              </label>
+              <label>Pajak Dividen (%)
+                <input id="divTax" type="number" min="0" step="0.1" value="10">
+              </label>
+            </div>
+            <div id="dividendResult" class="result-grid"></div>
+          </div>
+
+          <div class="metric-card calculator-card">
+            <h2>Right Issue</h2>
+            <p>Hitung hak tebus, dana yang dibutuhkan, TERP, dan average setelah tebus.</p>
+            <div class="calc-form">
+              <label>Lot Saat Ini
+                <input id="rightLot" type="number" min="0" step="1" value="10">
+              </label>
+              <label>Harga Pasar (Rp)
+                <input id="rightMarketPrice" type="number" min="0" step="1" value="1000">
+              </label>
+              <label>Rasio Lama
+                <input id="rightOldRatio" type="number" min="1" step="1" value="2">
+              </label>
+              <label>Rasio Baru
+                <input id="rightNewRatio" type="number" min="0" step="1" value="1">
+              </label>
+              <label>Harga Tebus (Rp)
+                <input id="rightExercisePrice" type="number" min="0" step="1" value="800">
+              </label>
+            </div>
+            <div id="rightResult" class="result-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>© <span id="footerYear"></span> IHSG Fear &amp; Greed Index · Data bersifat indikatif, bukan rekomendasi investasi ·
+      <a href="mailto:mugenworklabs@gmail.com">mugenworklabs@gmail.com</a></p>
+    </footer>
+  </main>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

@@ -89,20 +89,25 @@ else:
 skor_hari_ini = round(s_mom*0.25 + s_rsi*0.20 + s_vol*0.20 + s_idr*0.20 + s_tr*0.15, 1)
 tanggal       = close.index[-1].date()
 harga_ihsg    = float(close.iloc[-1])
+kurs_idr      = float(idr.iloc[-1])
 
 print(f"\n📊 Skor hari ini ({tanggal}): {skor_hari_ini}")
 print(f"   Momentum:{s_mom} | RSI:{s_rsi} | Volume:{s_vol} | Rupiah:{s_idr} | Trends:{s_tr}")
 
 # ── UPDATE CSV ────────────────────────────────────────────────
 os.makedirs("data", exist_ok=True)
+columns = ["skor","close","usd_idr","s_mom","s_rsi","s_vol","s_idr","s_tr"]
 if os.path.exists(csv_path):
     df_hist = pd.read_csv(csv_path, index_col="date", parse_dates=True)
+    for col in columns:
+        if col not in df_hist.columns:
+            df_hist[col] = np.nan
 else:
-    df_hist = pd.DataFrame(columns=["skor","close","s_mom","s_rsi","s_vol","s_idr","s_tr"])
+    df_hist = pd.DataFrame(columns=columns)
     df_hist.index.name = "date"
 
 tanggal_ts = pd.Timestamp(tanggal)
-baris_baru = {"skor":skor_hari_ini,"close":harga_ihsg,"s_mom":s_mom,"s_rsi":s_rsi,"s_vol":s_vol,"s_idr":s_idr,"s_tr":s_tr}
+baris_baru = {"skor":skor_hari_ini,"close":harga_ihsg,"usd_idr":kurs_idr,"s_mom":s_mom,"s_rsi":s_rsi,"s_vol":s_vol,"s_idr":s_idr,"s_tr":s_tr}
 
 if tanggal_ts in df_hist.index:
     for k, v in baris_baru.items():
