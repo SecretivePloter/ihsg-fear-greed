@@ -11,8 +11,8 @@ Render Free Web Service akan sleep setelah idle. Versi ini tidak menjalankan ser
 - `index.html` — UI utama dan P&L Generator.
 - `assets/app.js` — logika chart, gauge, dan generator gambar.
 - `data/historis.csv` — data historis yang dibaca langsung oleh browser.
-- `update_data.py` — script update data harian dari GitHub Actions.
-- `.github/workflows/update.yml` — update `data/historis.csv` setiap hari bursa.
+- `update_data.py` — script update data otomatis dari GitHub Actions.
+- `.github/workflows/update.yml` — update `data/historis.csv` tiap jam saat hari bursa.
 - `package.json` — build script untuk platform seperti Vercel/Render.
 
 ## Jalankan lokal
@@ -50,3 +50,7 @@ Aktifkan dari repository settings:
 4. Save.
 
 GitHub Actions tetap meng-update `data/historis.csv` secara otomatis.
+
+## Jadwal update data
+
+GitHub Actions menjalankan update setiap hari kerja Senin–Jumat, tiap jam dari 10:00 sampai 17:00 WIB. Jika Google Trends gagal atau terkena limit, script tetap memperbarui indikator IHSG, volume, RSI, dan USD/IDR, lalu memakai skor Google Trends terakhir dari CSV sampai fetch berikutnya berhasil.
