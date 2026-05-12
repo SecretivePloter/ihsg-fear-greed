@@ -378,10 +378,55 @@
       max-width: 980px;
     }
 
-    .calculator-grid {
+    .calculator-switch {
       display: grid;
-      gap: 1rem;
+      gap: 0.75rem;
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-bottom: 1rem;
+    }
+
+    .calculator-option {
+      align-items: flex-start;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.85rem;
+      text-align: left;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .calculator-option.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .calculator-option-icon {
+      font-size: 1.15rem;
+      line-height: 1;
+    }
+
+    .calculator-option-title {
+      display: block;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .calculator-option-desc {
+      color: var(--muted);
+      display: block;
+      font-size: 0.72rem;
+      line-height: 1.35;
+    }
+
+    .calculator-card[hidden] {
+      display: none;
     }
 
     .calculator-card h2 {
@@ -401,6 +446,60 @@
     .calc-form {
       display: grid;
       gap: 0.75rem;
+    }
+
+    .avg-buy-rows {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .avg-buy-row {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 12px;
+      padding: 0.75rem;
+    }
+
+    .avg-buy-heading {
+      align-items: center;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.65rem;
+    }
+
+    .avg-buy-heading strong {
+      color: var(--accent);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.82rem;
+    }
+
+    .avg-buy-heading span {
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .avg-buy-fields {
+      display: grid;
+      gap: 0.65rem;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.7fr);
+    }
+
+    .secondary-button,
+    .remove-buy-button {
+      background: #0d1117;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-weight: 700;
+      padding: 0.65rem 0.8rem;
+    }
+
+    .secondary-button {
+      width: 100%;
+    }
+
+    .remove-buy-button {
+      color: #fca5a5;
+      padding: 0.35rem 0.55rem;
     }
 
     .calc-form label {
@@ -457,7 +556,8 @@
       .nav-link { justify-content: center; width: 100%; }
       .layout,
       .metric-grid,
-      .calculator-grid {
+      .calculator-switch,
+      .avg-buy-fields {
         grid-template-columns: 1fr;
       }
       .logo {
@@ -623,23 +723,37 @@
         </header>
         <div class="divider"></div>
 
-        <div class="calculator-grid">
-          <div class="metric-card calculator-card">
+        <div class="calculator-switch" role="tablist" aria-label="Pilih kalkulator saham">
+          <button class="calculator-option active" type="button" data-calculator-target="average" role="tab" aria-selected="true">
+            <span class="calculator-option-icon">📊</span>
+            <span>
+              <span class="calculator-option-title">Average Price</span>
+              <span class="calculator-option-desc">Tambah buy opsional sesuai kebutuhan.</span>
+            </span>
+          </button>
+          <button class="calculator-option" type="button" data-calculator-target="dividend" role="tab" aria-selected="false">
+            <span class="calculator-option-icon">💰</span>
+            <span>
+              <span class="calculator-option-title">Dividen</span>
+              <span class="calculator-option-desc">Hitung dividen bersih dan yield.</span>
+            </span>
+          </button>
+          <button class="calculator-option" type="button" data-calculator-target="right" role="tab" aria-selected="false">
+            <span class="calculator-option-icon">🧾</span>
+            <span>
+              <span class="calculator-option-title">Right Issue</span>
+              <span class="calculator-option-desc">Hitung hak tebus dan TERP.</span>
+            </span>
+          </button>
+        </div>
+
+        <div class="calculator-panels">
+          <div class="metric-card calculator-card" data-calculator-panel="average">
             <h2>Average Price</h2>
-            <p>Gabungkan buy 1 dan buy 2 untuk melihat modal, average, dan estimasi profit/loss.</p>
+            <p>Mulai dari buy 1 saja. Tambahkan buy berikutnya hanya kalau diperlukan.</p>
             <div class="calc-form">
-              <label>Buy 1 (Rp)
-                <input id="avgBuy1Price" type="number" min="0" step="1" value="9000">
-              </label>
-              <label>Lot Buy 1
-                <input id="avgBuy1Lot" type="number" min="0" step="1" value="1">
-              </label>
-              <label>Buy 2 (Rp)
-                <input id="avgBuy2Price" type="number" min="0" step="1" value="8500">
-              </label>
-              <label>Lot Buy 2
-                <input id="avgBuy2Lot" type="number" min="0" step="1" value="1">
-              </label>
+              <div id="avgBuyRows" class="avg-buy-rows"></div>
+              <button id="addAvgBuy" class="secondary-button" type="button">+ Tambah Buy</button>
               <label>Harga Sekarang (Rp)
                 <input id="avgCurrentPrice" type="number" min="0" step="1" value="9200">
               </label>
@@ -650,7 +764,7 @@
             <div id="averageResult" class="result-grid"></div>
           </div>
 
-          <div class="metric-card calculator-card">
+          <div class="metric-card calculator-card" data-calculator-panel="dividend" hidden>
             <h2>Kalkulator Dividen</h2>
             <p>Estimasi dividen kotor, pajak, dividen bersih, dan dividend yield.</p>
             <div class="calc-form">
@@ -670,9 +784,9 @@
             <div id="dividendResult" class="result-grid"></div>
           </div>
 
-          <div class="metric-card calculator-card">
+          <div class="metric-card calculator-card" data-calculator-panel="right" hidden>
             <h2>Right Issue</h2>
-            <p>Hitung hak tebus, dana yang dibutuhkan, TERP, dan average setelah tebus.</p>
+            <p>Hitung hak tebus, dana yang dibutuhkan, TERP, serta jumlah lot dan lembar setelah tebus.</p>
             <div class="calc-form">
               <label>Lot Saat Ini
                 <input id="rightLot" type="number" min="0" step="1" value="10">
