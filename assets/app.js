@@ -3,6 +3,7 @@ const state = {
   latest: null,
   currentPeriod: 365,
   pnlTemplate: null,
+  usdIdr: null,
 };
 
 const scoreBands = [
@@ -19,7 +20,7 @@ const indicators = [
   ['Volume Pasar', 's_vol', 0.20, 'Volume 5 hari vs 90 hari — volume rendah = lesu'],
   ['Kurs Rupiah', 's_idr', 0.20, 'Rupiah melemah = investor asing cabut = fear'],
   ['Sentimen Publik', 's_tr', 0.15, 'Google Trends: IHSG, rupiah, saham, investasi, bursa'],
-  ['USD/IDR', 'usd_idr_score', 0, 'Kurs terakhir dari Yahoo Finance, ditampilkan setelah update data berikutnya'],
+  ['USD/IDR', 'usd_idr_score', 0, 'Kurs USD/IDR harian untuk konteks pergerakan rupiah'],
 ];
 
 function parseCsv(text) {
@@ -46,6 +47,11 @@ function formatNumber(value, digits = 1) {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
   });
+}
+
+function formatSignedPercent(value) {
+  if (!Number.isFinite(value)) return 'N/A';
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
 function formatDate(dateString, options = { day: '2-digit', month: 'short', year: 'numeric' }) {
@@ -84,6 +90,13 @@ function nearestScore(daysAgo) {
 function setText(id, value) {
   const el = document.getElementById(id);
   if (el) el.textContent = value;
+}
+
+function latestUsdIdr() {
+  if (Number.isFinite(state.latest?.usd_idr)) return state.latest.usd_idr;
+  if (Number.isFinite(state.usdIdr)) return state.usdIdr;
+  const row = [...state.rows].reverse().find((item) => Number.isFinite(item.usd_idr));
+  return row?.usd_idr ?? null;
 }
 
 function setGauge(score) {
@@ -131,15 +144,17 @@ function renderHistoricalCards() {
 function renderMetrics() {
   setGauge(state.latest.skor);
   setText('ihsgValue', formatNumber(state.latest.close, 2));
-  setText('idrValue', Number.isFinite(state.latest.usd_idr) ? formatNumber(state.latest.usd_idr, 0) : 'N/A');
+  const usdIdr = latestUsdIdr();
+  setText('idrValue', Number.isFinite(usdIdr) ? formatNumber(usdIdr, 0) : 'Memuat...');
   setText('updateValue', formatDate(state.latest.date));
 }
 
 function renderIndicators() {
+  const usdIdr = latestUsdIdr();
   document.getElementById('indicatorCards').innerHTML = indicators.map(([name, key, weight, desc]) => {
     const score = key === 'usd_idr_score' ? state.latest.s_idr : state.latest[key];
     const value = Number.isFinite(score) ? score : 50;
-    const displayValue = key === 'usd_idr_score' ? state.latest.usd_idr : value;
+    const displayValue = key === 'usd_idr_score' ? usdIdr : value;
     const band = bandFor(value);
     return `
       <div class="metric-card">
@@ -155,6 +170,30 @@ function renderIndicators() {
       </div>
     `;
   }).join('');
+}
+
+async function hydrateUsdIdrFallback() {
+  const usdIdr = latestUsdIdr();
+  if (Number.isFinite(usdIdr)) {
+    state.usdIdr = usdIdr;
+    renderMetrics();
+    renderIndicators();
+    return;
+  }
+
+  try {
+    const response = await fetch('https://open.er-api.com/v6/latest/USD', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    const rate = Number(data?.rates?.IDR);
+    if (!Number.isFinite(rate)) throw new Error('IDR rate missing');
+    state.usdIdr = rate;
+    renderMetrics();
+    renderIndicators();
+  } catch (error) {
+    console.warn('USD/IDR fallback failed', error);
+    setText('idrValue', 'N/A');
+  }
 }
 
 function renderChart() {
@@ -246,10 +285,13 @@ function showTab(tab) {
 
 function showRoute() {
   const isPnl = location.hash === '#/pnl';
-  document.getElementById('homePage').classList.toggle('active', !isPnl);
+  const isCalculator = location.hash === '#/calculator';
+  document.getElementById('homePage').classList.toggle('active', !isPnl && !isCalculator);
   document.getElementById('pnlPage').classList.toggle('active', isPnl);
+  document.getElementById('calculatorPage').classList.toggle('active', isCalculator);
   if (isPnl) renderPnl();
-  if (!isPnl && state.rows.length > 0) setTimeout(renderChart, 0);
+  if (isCalculator) renderCalculators();
+  if (!isPnl && !isCalculator && state.rows.length > 0) setTimeout(renderChart, 0);
 }
 
 async function initHome() {
@@ -262,6 +304,7 @@ async function initHome() {
     renderHistoricalCards();
     renderIndicators();
     renderChart();
+    hydrateUsdIdrFallback();
     document.getElementById('loading').hidden = true;
     document.getElementById('homeContent').hidden = false;
   } catch (error) {
@@ -287,6 +330,94 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
 
 function rupiah(value) {
   return `Rp${Math.round(value).toLocaleString('en-US')}`;
+}
+
+function numberFromInput(id) {
+  return Number(document.getElementById(id).value);
+}
+
+function resultRow(label, value, tone = '') {
+  return `
+    <div class="result-row">
+      <span>${label}</span>
+      <strong style="${tone ? `color:${tone};` : ''}">${value}</strong>
+    </div>
+  `;
+}
+
+function renderAverageCalculator() {
+  const buy1 = numberFromInput('avgBuy1Price');
+  const lot1 = numberFromInput('avgBuy1Lot');
+  const buy2 = numberFromInput('avgBuy2Price');
+  const lot2 = numberFromInput('avgBuy2Lot');
+  const current = numberFromInput('avgCurrentPrice');
+  const fee = numberFromInput('avgBuyFee') / 100;
+  const shares1 = lot1 * 100;
+  const shares2 = lot2 * 100;
+  const totalShares = shares1 + shares2;
+  const grossCost = buy1 * shares1 + buy2 * shares2;
+  const totalCost = grossCost * (1 + fee);
+  const average = totalShares > 0 ? totalCost / totalShares : 0;
+  const marketValue = current * totalShares;
+  const pnl = marketValue - totalCost;
+  const pnlPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+  const color = pnl >= 0 ? '#06ab6d' : '#ef4444';
+
+  document.getElementById('averageResult').innerHTML = [
+    resultRow('Total Lot', formatNumber(lot1 + lot2, 0)),
+    resultRow('Total Modal + Fee', rupiah(totalCost)),
+    resultRow('Average Price', rupiah(average)),
+    resultRow('Nilai Sekarang', rupiah(marketValue)),
+    resultRow('Estimasi P/L', `${rupiah(pnl)} (${formatSignedPercent(pnlPct)})`, color),
+  ].join('');
+}
+
+function renderDividendCalculator() {
+  const lot = numberFromInput('divLot');
+  const avgPrice = numberFromInput('divAvgPrice');
+  const dividendPerShare = numberFromInput('divPerShare');
+  const tax = numberFromInput('divTax') / 100;
+  const shares = lot * 100;
+  const gross = shares * dividendPerShare;
+  const taxAmount = gross * tax;
+  const net = gross - taxAmount;
+  const invested = shares * avgPrice;
+  const yieldPct = invested > 0 ? (net / invested) * 100 : 0;
+
+  document.getElementById('dividendResult').innerHTML = [
+    resultRow('Jumlah Saham', formatNumber(shares, 0)),
+    resultRow('Dividen Kotor', rupiah(gross)),
+    resultRow('Pajak', rupiah(taxAmount)),
+    resultRow('Dividen Bersih', rupiah(net), '#06ab6d'),
+    resultRow('Dividend Yield', formatSignedPercent(yieldPct), '#06ab6d'),
+  ].join('');
+}
+
+function renderRightIssueCalculator() {
+  const lot = numberFromInput('rightLot');
+  const marketPrice = numberFromInput('rightMarketPrice');
+  const oldRatio = numberFromInput('rightOldRatio');
+  const newRatio = numberFromInput('rightNewRatio');
+  const exercisePrice = numberFromInput('rightExercisePrice');
+  const currentShares = lot * 100;
+  const rightsShares = oldRatio > 0 ? currentShares * (newRatio / oldRatio) : 0;
+  const totalShares = currentShares + rightsShares;
+  const exerciseCost = rightsShares * exercisePrice;
+  const terp = totalShares > 0 ? ((currentShares * marketPrice) + exerciseCost) / totalShares : 0;
+
+  document.getElementById('rightResult').innerHTML = [
+    resultRow('Hak Saham Baru', `${formatNumber(rightsShares, 0)} saham`),
+    resultRow('Dana Tebus', rupiah(exerciseCost)),
+    resultRow('Total Saham Setelah Tebus', formatNumber(totalShares, 0)),
+    resultRow('TERP Teoritis', rupiah(terp)),
+    resultRow('Diskon/Premium vs Pasar', formatSignedPercent(marketPrice > 0 ? ((terp - marketPrice) / marketPrice) * 100 : 0)),
+  ].join('');
+}
+
+function renderCalculators() {
+  renderAverageCalculator();
+  renderDividendCalculator();
+  renderRightIssueCalculator();
 }
 
 function renderPnl() {
@@ -425,6 +556,28 @@ document.getElementById('generatePnl').addEventListener('click', renderPnl);
 ['emitenInput', 'buyInput', 'sellInput'].forEach((id) => {
   document.getElementById(id).addEventListener('input', renderPnl);
 });
+[
+  'avgBuy1Price',
+  'avgBuy1Lot',
+  'avgBuy2Price',
+  'avgBuy2Lot',
+  'avgCurrentPrice',
+  'avgBuyFee',
+].forEach((id) => {
+  document.getElementById(id).addEventListener('input', renderAverageCalculator);
+});
+['divLot', 'divAvgPrice', 'divPerShare', 'divTax'].forEach((id) => {
+  document.getElementById(id).addEventListener('input', renderDividendCalculator);
+});
+[
+  'rightLot',
+  'rightMarketPrice',
+  'rightOldRatio',
+  'rightNewRatio',
+  'rightExercisePrice',
+].forEach((id) => {
+  document.getElementById(id).addEventListener('input', renderRightIssueCalculator);
+});
 window.addEventListener('hashchange', showRoute);
 window.addEventListener('resize', () => {
   if (document.getElementById('homePage').classList.contains('active') && state.rows.length > 0) renderChart();
@@ -434,3 +587,4 @@ initHome();
 showRoute();
 initPnlTemplate();
 renderPnl();
+renderCalculators();
