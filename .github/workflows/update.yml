@@ -2,7 +2,8 @@ name: Update IHSG Fear & Greed Data
 
 on:
   schedule:
-    - cron: '0 9 * * 1-5'
+    # Weekdays, hourly from 10:00-17:00 WIB.
+    - cron: '0 3-10 * * 1-5'
   workflow_dispatch:
 
 env:

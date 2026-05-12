@@ -443,6 +443,35 @@
       margin: 0 0 0.85rem;
     }
 
+    .calculator-guide {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 12px;
+      color: var(--muted);
+      display: grid;
+      gap: 0.45rem;
+      margin-bottom: 0.9rem;
+      padding: 0.85rem;
+    }
+
+    .calculator-guide strong {
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.82rem;
+    }
+
+    .calculator-guide ul {
+      display: grid;
+      gap: 0.35rem;
+      line-height: 1.5;
+      margin: 0;
+      padding-left: 1.1rem;
+    }
+
+    .calculator-guide li {
+      font-size: 0.78rem;
+    }
+
     .calc-form {
       display: grid;
       gap: 0.75rem;
@@ -751,6 +780,14 @@
           <div class="metric-card calculator-card" data-calculator-panel="average">
             <h2>Average Price</h2>
             <p>Mulai dari buy 1 saja. Tambahkan buy berikutnya hanya kalau diperlukan.</p>
+            <div class="calculator-guide">
+              <strong>Cara pakai</strong>
+              <ul>
+                <li>Isi harga dan jumlah lot pembelian pertama di Buy 1.</li>
+                <li>Jika membeli lagi di harga berbeda, klik <b>+ Tambah Buy</b> untuk menambah Buy 2, Buy 3, dan seterusnya.</li>
+                <li>Masukkan harga sekarang untuk melihat average price, total modal, nilai saat ini, dan estimasi profit/loss.</li>
+              </ul>
+            </div>
             <div class="calc-form">
               <div id="avgBuyRows" class="avg-buy-rows"></div>
               <button id="addAvgBuy" class="secondary-button" type="button">+ Tambah Buy</button>
@@ -767,6 +804,14 @@
           <div class="metric-card calculator-card" data-calculator-panel="dividend" hidden>
             <h2>Kalkulator Dividen</h2>
             <p>Estimasi dividen kotor, pajak, dividen bersih, dan dividend yield.</p>
+            <div class="calculator-guide">
+              <strong>Cara pakai</strong>
+              <ul>
+                <li>Dividen adalah pembagian laba perusahaan kepada pemegang saham, biasanya dihitung per lembar saham.</li>
+                <li>Isi jumlah lot yang dimiliki, average price, dividen per saham, dan pajak dividen.</li>
+                <li>Hasil <b>Dividen Bersih</b> adalah estimasi uang diterima setelah pajak; <b>Dividend Yield</b> menunjukkan persentase dividen terhadap modal.</li>
+              </ul>
+            </div>
             <div class="calc-form">
               <label>Jumlah Lot
                 <input id="divLot" type="number" min="0" step="1" value="10">
@@ -787,6 +832,14 @@
           <div class="metric-card calculator-card" data-calculator-panel="right" hidden>
             <h2>Right Issue</h2>
             <p>Hitung hak tebus, dana yang dibutuhkan, TERP, serta jumlah lot dan lembar setelah tebus.</p>
+            <div class="calculator-guide">
+              <strong>Cara pakai</strong>
+              <ul>
+                <li>Right issue adalah hak membeli saham baru dari emiten; investor bisa menebus hak itu atau melepasnya.</li>
+                <li>Isi lot saat ini, harga pasar, rasio lama/baru, dan harga tebus sesuai pengumuman right issue.</li>
+                <li>Hasil menampilkan hak saham baru, dana tebus, total lot/lembar setelah tebus, dan TERP sebagai estimasi harga teoritis setelah aksi korporasi.</li>
+              </ul>
+            </div>
             <div class="calc-form">
               <label>Lot Saat Ini
                 <input id="rightLot" type="number" min="0" step="1" value="10">

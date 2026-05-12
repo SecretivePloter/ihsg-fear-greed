@@ -1,7 +1,9 @@
 """
 update_data.py
-Dijalankan otomatis tiap hari via GitHub Actions.
+Dijalankan otomatis beberapa kali saat hari bursa via GitHub Actions.
 Google Trends di-fetch di sini (bukan di app) untuk hindari rate limit.
+Jika Google Trends gagal/kena limit, indikator lain tetap di-update dan
+skor trends terakhir dari CSV dipakai sementara.
 """
 
 import yfinance as yf
