@@ -464,11 +464,14 @@ function renderRightIssueCalculator() {
   const terp = totalShares > 0 ? ((currentShares * marketPrice) + exerciseCost) / totalShares : 0;
   const rightsLot = rightsShares / 100;
   const totalLot = totalShares / 100;
+  const ownershipAfterSkip = totalShares > 0 ? (currentShares / totalShares) * 100 : 0;
+  const dilutionPct = totalShares > 0 ? 100 - ownershipAfterSkip : 0;
 
   document.getElementById('rightResult').innerHTML = [
     resultRow('Hak Saham Baru', `${formatNumber(rightsLot, 2)} lot / ${formatNumber(rightsShares, 0)} lembar`),
     resultRow('Dana Tebus', rupiah(exerciseCost)),
     resultRow('Total Setelah Tebus', `${formatNumber(totalLot, 2)} lot / ${formatNumber(totalShares, 0)} lembar`),
+    resultRow('Dilusi Jika Tidak Tebus', `${formatNumber(dilutionPct, 2)}% (porsi jadi ${formatNumber(ownershipAfterSkip, 2)}%)`),
     resultRow('TERP Teoritis', rupiah(terp)),
     resultRow('Diskon/Premium vs Pasar', formatSignedPercent(marketPrice > 0 ? ((terp - marketPrice) / marketPrice) * 100 : 0)),
   ].join('');
